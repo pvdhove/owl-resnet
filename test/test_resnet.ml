@@ -15,7 +15,9 @@ open Neural.S.Graph
 module N = Dense.Ndarray.S
 
 (* This file should be run with 'owl ./test_resnet.ml' *)
-             
+let weight_file = "resnet.network"
+let src = "your/picture.jpg"
+            
 (* Preprocessing recommended for Resnet. *)
 let preprocess img = 
   let img = N.copy img in
@@ -42,9 +44,7 @@ let convert_to_ndarray src w h =
   let img_arr = Graphic_image.array_of_image (Rgb24 img) in
   N.init_nd [|w; h; 3|]
     (fun t -> float (comp t.(2) img_arr.(t.(0)).(t.(1))))
-    
-let weight_file = "resnet.weights"
-                    
+         
 let prediction src =
   let img_size = 224 in
   let nn = Graph.load weight_file in
@@ -55,6 +55,5 @@ let prediction src =
   Graph.model nn img_arr
 
 let () =
-  let src = "pics/lion.jpg" in
   Imagenet_cls.to_json (prediction src)
   |> Printf.printf "%s\n"

@@ -155,6 +155,6 @@ let () =
       else
         ()
     ) nodes;
-  Graph.save nn "resnet.weights";
+  Graph.save nn "resnet.network";
   H5.close h5_file
 
