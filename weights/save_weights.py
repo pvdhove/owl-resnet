@@ -10,6 +10,7 @@ for node_name in f.keys():
     for param in f[node_name].keys():
         conv_weight = f[node_name][param].value.tolist()
         data_file.create_dataset(param, data=conv_weight)
-      
-f.close()  
+
+f.close()
 data_file.close()
+

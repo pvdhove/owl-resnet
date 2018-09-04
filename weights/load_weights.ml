@@ -1,13 +1,10 @@
 open Owl
-open Owl_types
-open Bigarray
 open Hdf5_caml
 
-open Neural 
-open Neural.S 
+open Neural.S
 open Neural.S.Graph
 module N = Dense.Ndarray.Generic
-module AD = Owl.Algodiff.S
+module AD = Neural.S.Algodiff
 
 let id_block input kernel_size filters stage block input_layer =
   let suffix = string_of_int stage ^ block ^ "_branch" in
@@ -19,11 +16,11 @@ let id_block input kernel_size filters stage block input_layer =
     |> conv2d [|1; 1; input; f1|] [|1; 1|] ~padding:VALID ~name:(conv_name^"2a")
     |> normalisation ~axis:3 ~name:(bn_name^"2a")
     |> activation Activation.Relu
-                  
+
     |> conv2d [|kernel_size; kernel_size; f1; f2|] [|1; 1|] ~padding:SAME ~name:(conv_name^"2b")
     |> normalisation ~axis:3 ~name:(bn_name^"2b")
     |> activation Activation.Relu
-                  
+
     |> conv2d [|1; 1; f2; f3|] [|1; 1|] ~padding:VALID ~name:(conv_name^"2c")
     |> normalisation ~axis:3 ~name:(bn_name^"2c") in
 
@@ -40,14 +37,14 @@ let conv_block input kernel_size filters strides stage block input_layer =
     |> conv2d [|1; 1; input; f1|] strides ~padding:VALID ~name:(conv_name^"2a")
     |> normalisation ~axis:3 ~name:(bn_name^"2a")
     |> activation Activation.Relu
-                  
+
     |> conv2d [|kernel_size; kernel_size; f1; f2|] [|1; 1|] ~padding:SAME ~name:(conv_name^"2b")
     |> normalisation ~axis:3 ~name:(bn_name^"2b")
     |> activation Activation.Relu
-                  
+
     |> conv2d [|1; 1; f2; f3|] [|1; 1|] ~padding:VALID ~name:(conv_name^"2c")
     |> normalisation ~axis:3 ~name:(bn_name^"2c") in
-  
+
   let shortcut =
     input_layer
     |> conv2d [|1; 1; input; f3|] strides ~name:(conv_name^"1")
@@ -103,7 +100,7 @@ let lin_W = "_W:0"
 let lin_b = "_b:0"
 
 (* A helper function *)
-let print_array a = 
+let print_array a =
   Printf.printf "[|";
   Array.iter (fun x -> Printf.printf "%i; " x) a ;
   Printf.printf "|]\n"
@@ -120,7 +117,8 @@ let () =
         let w = N.cast_d2s w and
             b = N.cast_d2s b in
         param.(0) <- AD.pack_arr w; param.(1) <- AD.pack_arr b;
-        Neuron.update n.neuron param )
+        Neuron.update n.neuron param
+      )
       else if Neuron.to_name n.neuron = "normalisation" then (
         let b = H5.read_float_genarray h5_file (n.name ^ bn_beta) C_layout in
         let g = H5.read_float_genarray h5_file (n.name ^ bn_gamma) C_layout in
@@ -130,19 +128,19 @@ let () =
             g = N.cast_d2s g and
             mu = N.cast_d2s mu and
             std = N.cast_d2s std in
-        let len = Dense.Ndarray.S.shape b in 
+        let len = Dense.Ndarray.S.shape b in
         let b = Dense.Ndarray.S.reshape b [|1;1;1;len.(0)|] in
-        let len = Dense.Ndarray.S.shape g in 
+        let len = Dense.Ndarray.S.shape g in
         let g = Dense.Ndarray.S.reshape g [|1;1;1;len.(0)|] in
-        let len = Dense.Ndarray.S.shape mu in 
+        let len = Dense.Ndarray.S.shape mu in
         let mu = Dense.Ndarray.S.reshape mu [|1;1;1;len.(0)|] in
-        let len = Dense.Ndarray.S.shape std in 
+        let len = Dense.Ndarray.S.shape std in
         let std = Dense.Ndarray.S.reshape std [|1;1;1;len.(0)|] in
         param.(0) <- AD.pack_arr b; param.(1) <- AD.pack_arr g;
         Neuron.update n.neuron param;
         (function Neuron.Normalisation a -> (a.mu <- (AD.pack_arr mu))) n.neuron;
         (function Neuron.Normalisation a -> (a.var <- (AD.pack_arr std))) n.neuron;
-      (*var != std? *) )
+      )
       else if Neuron.to_name n.neuron = "linear" then (
         let w = H5.read_float_genarray h5_file (n.name ^ lin_W) C_layout in
         let b = H5.read_float_genarray h5_file (n.name ^ lin_b) C_layout in
@@ -151,7 +149,8 @@ let () =
         let b_dim = Array.append [|1|] (Dense.Ndarray.S.shape b) in
         let b = Dense.Ndarray.S.reshape b b_dim in
         param.(0) <- AD.pack_arr w; param.(1) <- AD.pack_arr b;
-        Neuron.update n.neuron param )
+        Neuron.update n.neuron param
+      )
       else
         ()
     ) nodes;

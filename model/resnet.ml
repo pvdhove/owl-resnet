@@ -1,14 +1,13 @@
 #!/usr/bin/env owl
 
 open Owl
-open Owl_types
-open Neural 
 open Neural.S
 open Neural.S.Graph
 
 (* The code is heavily inspired by
- * https://github.com/keras-team/keras-applications/blob/master/keras_applications/resnet50.py
- * and https://github.com/matterport/Mask_RCNN/blob/master/mrcnn/model.py *)
+ * https://github.com/keras-team/keras-applications/blob/master/
+ * keras_applications/resnet50.py and
+ * https://github.com/matterport/Mask_RCNN/blob/master/mrcnn/model.py *)
 
 let id_block input kernel_size filters stage block input_layer =
   let suffix = string_of_int stage ^ block ^ "_branch" in
@@ -18,13 +17,14 @@ let id_block input kernel_size filters stage block input_layer =
   let x =
     input_layer
     |> conv2d [|1; 1; input; f1|] [|1; 1|] ~padding:VALID ~name:(conv_name^"2a")
-    |> normalisation ~axis:3 ~name:(bn_name^"2a") (* 3 should be the axis since [|1;224;224;3|] *)
+    |> normalisation ~axis:3 ~name:(bn_name^"2a")
     |> activation Activation.Relu
-                  
-    |> conv2d [|kernel_size; kernel_size; f1; f2|] [|1; 1|] ~padding:SAME ~name:(conv_name^"2b")
+
+    |> conv2d [|kernel_size; kernel_size; f1; f2|] [|1; 1|]
+         ~padding:SAME ~name:(conv_name^"2b")
     |> normalisation ~axis:3 ~name:(bn_name^"2b")
     |> activation Activation.Relu
-                  
+
     |> conv2d [|1; 1; f2; f3|] [|1; 1|] ~padding:VALID ~name:(conv_name^"2c")
     |> normalisation ~axis:3 ~name:(bn_name^"2c") in
 
@@ -41,14 +41,15 @@ let conv_block input kernel_size filters strides stage block input_layer =
     |> conv2d [|1; 1; input; f1|] strides ~padding:VALID ~name:(conv_name^"2a")
     |> normalisation ~axis:3 ~name:(bn_name^"2a")
     |> activation Activation.Relu
-                  
-    |> conv2d [|kernel_size; kernel_size; f1; f2|] [|1; 1|] ~padding:SAME ~name:(conv_name^"2b")
+
+    |> conv2d [|kernel_size; kernel_size; f1; f2|] [|1; 1|]
+         ~padding:SAME ~name:(conv_name^"2b")
     |> normalisation ~axis:3 ~name:(bn_name^"2b")
     |> activation Activation.Relu
-                  
+
     |> conv2d [|1; 1; f2; f3|] [|1; 1|] ~padding:VALID ~name:(conv_name^"2c")
     |> normalisation ~axis:3 ~name:(bn_name^"2c") in
-  
+
   let shortcut =
     input_layer
     |> conv2d [|1; 1; input; f3|] strides ~name:(conv_name^"1")
@@ -60,7 +61,7 @@ let conv_block input kernel_size filters strides stage block input_layer =
 let resnet50 img_size nb_classes =
   (* +6 is a quick hack instead of zero_padding2d [|3; 3|] *)
   input [|img_size + 6; img_size + 6; 3|]
-  (* should be |> zero_padding2d [|3; 3|] ~name:"conv1_pad" *)
+  (* Should be |> padding2d [|3; 3|] ~name:"conv1_pad" *)
   |> conv2d [|7; 7; 3; 64|] [|2; 2|] ~padding:VALID ~name:"conv1"
   |> normalisation ~axis:3 ~name:"bn_conv1"
   |> activation Activation.Relu
@@ -75,7 +76,7 @@ let resnet50 img_size nb_classes =
   |> id_block 512 3 (128, 128, 512) 3 "c"
   |> id_block 512 3 (128, 128, 512) 3 "d"
 
-  (* here should be the change for resnet101 *)
+  (* Here should be the change for ResNet101. *)
   |> conv_block 512 3 (256, 256, 1024) [|2; 2|] 4 "a"
   |> id_block 1024 3 (256, 256, 1024) 4 "b"
   |> id_block 1024 3 (256, 256, 1024) 4 "c"
