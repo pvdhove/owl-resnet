@@ -9,7 +9,7 @@ module N = Dense.Ndarray.S
 
 (* This file should be run with 'owl ./test.ml' *)
 let weight_file = "weights/resnet.network"
-let src = "pics/lion.jpg"
+let src = "your/picture.jpg"
 
 (* Preprocessing recommended for Resnet. *)
 let preprocess img =
