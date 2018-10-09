@@ -59,9 +59,8 @@ let conv_block input kernel_size filters strides stage block input_layer =
   |> activation Activation.Relu
 
 let resnet50 img_size nb_classes =
-  (* +6 is a quick hack instead of zero_padding2d [|3; 3|] *)
-  input [|img_size + 6; img_size + 6; 3|]
-  (* Should be |> padding2d [|3; 3|] ~name:"conv1_pad" *)
+  input [|img_size; img_size; 3|]
+  |> padding2d [|[|3; 3|]; [|3; 3|]|] ~name:"conv1_pad"
   |> conv2d [|7; 7; 3; 64|] [|2; 2|] ~padding:VALID ~name:"conv1"
   |> normalisation ~axis:3 ~name:"bn_conv1"
   |> activation Activation.Relu
