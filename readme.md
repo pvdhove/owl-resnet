@@ -1,4 +1,4 @@
-## Owl implementation of Resnet50.
+## Owl implementation of ResNet50 (using Computation Graph module)
 
 The pretrained weights from a Keras implementation have been taken from https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels.h5.
 
